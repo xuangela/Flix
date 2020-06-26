@@ -7,6 +7,7 @@
 //
 
 #import "MoviesGridViewController.h"
+#import "DetailsViewController.h"
 #import "MovieCollectionCell.h"
 #import "UIImageView+AFNetworking.h"
 
@@ -65,15 +66,20 @@
     [task resume];
 }
 
-/*
+
 #pragma mark - Navigation
 
 // In a storyboard-based application, you will often want to do a little preparation before navigation
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+    UICollectionViewCell *tappedCell = sender;
+    NSIndexPath *indexPath = [self.collectionView indexPathForCell:tappedCell];
+    NSDictionary *movie = self.movies[indexPath.item];
+    
+    //getting the new view controller
+    DetailsViewController *detailViewController = [segue destinationViewController];
+    detailViewController.movie = movie;
 }
-*/
+
 
 - (nonnull __kindof UICollectionViewCell *)collectionView:(nonnull UICollectionView *)collectionView cellForItemAtIndexPath:(nonnull NSIndexPath *)indexPath {
     MovieCollectionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"MovieCollectionCell" forIndexPath:indexPath];
