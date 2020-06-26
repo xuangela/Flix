@@ -63,7 +63,7 @@
                                     </tableViewCell>
                                 </prototypes>
                             </tableView>
-                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="large" id="wdV-rc-ILs">
+                            <activityIndicatorView hidden="YES" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="large" id="wdV-rc-ILs">
                                 <rect key="frame" x="189" y="429" width="37" height="37"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="color" red="1" green="0.80819710324842897" blue="0.92544582556725141" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
@@ -99,9 +99,13 @@
                                         <rect key="frame" x="0.0" y="-88" width="414" height="310"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                     </imageView>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="77n-0S-Mzl">
+                                    <imageView clipsSubviews="YES" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="77n-0S-Mzl">
                                         <rect key="frame" x="8" y="127" width="132" height="199"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <gestureRecognizers/>
+                                        <connections>
+                                            <outletCollection property="gestureRecognizers" destination="Lz2-9X-PNQ" appends="YES" id="eiX-W2-dUE"/>
+                                        </connections>
                                     </imageView>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Yp4-2B-TAq">
                                         <rect key="frame" x="36" y="350" width="351" height="416"/>
@@ -130,12 +134,47 @@
                         <outlet property="backDropView" destination="S7w-kE-YNK" id="oLy-Te-s5u"/>
                         <outlet property="posterView" destination="77n-0S-Mzl" id="2RD-rd-Fd8"/>
                         <outlet property="synopsisLabel" destination="Yp4-2B-TAq" id="ahs-2Q-Jd2"/>
+                        <outlet property="tapToTrailerGesture" destination="Lz2-9X-PNQ" id="M1B-Tb-7uR"/>
                         <outlet property="titleLabel" destination="WTg-Yu-Bqb" id="Zzx-kz-DdZ"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="jw0-cL-Wdc" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+                <tapGestureRecognizer id="Lz2-9X-PNQ">
+                    <connections>
+                        <segue destination="TF8-ug-lng" kind="presentation" id="DjR-5y-xYF"/>
+                    </connections>
+                </tapGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="1217" y="1812"/>
+        </scene>
+        <!--Trailer View Controller-->
+        <scene sceneID="fHj-bA-Wpw">
+            <objects>
+                <viewController id="TF8-ug-lng" customClass="TrailerViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ffk-37-imX">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="842"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <wkWebView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MSI-pM-CaA">
+                                <rect key="frame" x="20" y="-10" width="374" height="818"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" red="0.36078431370000003" green="0.38823529410000002" blue="0.4039215686" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <wkWebViewConfiguration key="configuration">
+                                    <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
+                                    <wkPreferences key="preferences"/>
+                                </wkWebViewConfiguration>
+                            </wkWebView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="ufj-fP-qs0"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="ep5-nl-rCF"/>
+                    <connections>
+                        <outlet property="webView" destination="MSI-pM-CaA" id="1bI-18-Kc5"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ehc-K4-cl8" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1160.8695652173915" y="2541.9642857142858"/>
         </scene>
         <!--Tab Bar Controller-->
         <scene sceneID="uqY-hm-X5Z">
@@ -247,6 +286,6 @@
         </scene>
     </scenes>
     <inferredMetricsTieBreakers>
-        <segue reference="CtL-f6-1B0"/>
+        <segue reference="KkE-Gv-kym"/>
     </inferredMetricsTieBreakers>
 </document>
