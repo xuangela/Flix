@@ -41,13 +41,9 @@ Please list two areas of the assignment you'd like to **discuss further with you
 ## Video Walkthrough
 
 Here's a walkthrough of implemented user stories:
-Search bar
+
 <img src='http://g.recordit.co/tpakIO83SI.gif' title='Search bar' width='' alt='Video Walkthrough' />
-
-Trailer
 <img src='http://g.recordit.co/BFcX89s9nL.gif' title='Trailer' width='' alt='Video Walkthrough' />
-
-Collection View
 <img src='http://g.recordit.co/Dcaks08J5F.gif' title='Collection View' width='' alt='Video Walkthrough' />
 
 GIF created with [Recordit](https://recordit.co/).
