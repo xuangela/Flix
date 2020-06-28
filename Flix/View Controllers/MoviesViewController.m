@@ -7,9 +7,10 @@
 //
 
 #import "MoviesViewController.h"
-#import "MovieCell.h"
 #import "DetailsViewController.h"
+#import "MovieCell.h"
 #import "UIImageView+AFNetworking.h"
+#import "Reachability.h"
 
 @interface MoviesViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate>
 
@@ -21,6 +22,8 @@
 @property (nonatomic, strong) NSArray *filteredMovies;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
 @property (nonatomic, strong) UIAlertController *alert;
+@property (nonatomic, strong) UIAlertController *alertResolution;
+@property BOOL alertTriggered;
 
 @end
 
@@ -33,21 +36,30 @@
     self.tableView.delegate = self;
     self.searchBar.delegate = self;
     
-    [self.activityIndicator startAnimating];
-    
     // setting up no internet error message
     self.alert = [UIAlertController alertControllerWithTitle:@"Cannot Get Movies" message:@"The internet connection appears to be offline." preferredStyle:(UIAlertControllerStyleAlert)];
-    UIAlertAction *retryAction = [UIAlertAction actionWithTitle:@"Try Again" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-        // retry response here. Doing nothing will dismiss the view
+    UIAlertAction *retryAction = [UIAlertAction actionWithTitle:@"Try Again" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        self.alertTriggered = YES;
+        [self checkForWIFIConnection];
     }];
+    UIAlertAction *dismissAlertAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {}];
     [self.alert addAction:retryAction];
+    [self.alert addAction:dismissAlertAction];
     
-    [self fetchMovies];
+    //setting up an internet resolved message
+    self.alertResolution = [UIAlertController alertControllerWithTitle:@"Reconnected" message:@"Reloading movies..." preferredStyle:(UIAlertControllerStyleAlert)];
+    UIAlertAction *dismissAction = [UIAlertAction actionWithTitle:@"Dismiss" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {}];
+    [self.alertResolution addAction:dismissAction];
     
+    // setting up the pull down refresh
     self.refreshControl = [[UIRefreshControl alloc] init];
-    [self.refreshControl addTarget:self action:@selector(fetchMovies) forControlEvents:UIControlEventValueChanged];
+    [self.refreshControl addTarget:self action:@selector(checkForWIFIConnection) forControlEvents:UIControlEventValueChanged];
     [self.tableView insertSubview:self.refreshControl atIndex:0];
-    
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [self.activityIndicator startAnimating];
+    [self checkForWIFIConnection];
 }
 
 - (void)fetchMovies {
@@ -55,28 +67,46 @@
     NSURL *url = [NSURL URLWithString:@"https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed"];
     NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:10.0];
     NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:nil delegateQueue:[NSOperationQueue mainQueue]];
+    
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
             if (error != nil) {
-               [self presentViewController:self.alert animated:YES completion:^{
-                   //what happens after the alert controller has finished presenting
-               }];
-           }
-           else {
+                if ([[error domain] isEqualToString:@"NSURLErrorDomain"]) {
+                    [self presentViewController:self.alert animated:YES completion:^{}];
+                } else {
+                    NSLog(@"%@", error);
+                }
+           } else {
                NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
                
                self.movies = dataDictionary[@"results"];
                self.filteredMovies = self.movies;
-        
+               
                [self.tableView reloadData];
+               
+               
            }
         [self.refreshControl endRefreshing];
         [self.activityIndicator stopAnimating];
         
     }];
-    
-    
-    
     [task resume];
+}
+
+// is there an internet connection?
+- (void)checkForWIFIConnection {
+    Reachability *wifiReach = [Reachability reachabilityForInternetConnection];
+
+    NetworkStatus netStatus = [wifiReach currentReachabilityStatus];
+
+    // ReachableViaWWAN == 3G, ReachableViaWiFi == WIFI
+    if (netStatus != ReachableViaWiFi) {
+        self.alertTriggered = YES;
+    } else if (self.alertTriggered){
+        [self presentViewController:self.alertResolution animated:YES completion:^{}];
+        [self.activityIndicator startAnimating];
+        self.alertTriggered = NO;
+    }
+    [self fetchMovies];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
