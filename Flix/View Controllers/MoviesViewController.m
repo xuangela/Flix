@@ -125,7 +125,31 @@
     NSString *fullPosterURLString = [baseURLString stringByAppendingString:posterURLString];
     
     NSURL *posterURL = [NSURL URLWithString:fullPosterURLString];
-    [cell.posterView setImageWithURL:posterURL];
+    NSURLRequest *posterRequest = [NSURLRequest requestWithURL:posterURL];
+    
+    [cell.posterView setImageWithURLRequest:posterRequest placeholderImage:nil
+    success:^(NSURLRequest *imageRequest, NSHTTPURLResponse *imageResponse, UIImage *image) {
+        
+        // imageResponse will be nil if the image is cached
+        if (imageResponse) {
+            NSLog(@"Image was NOT cached, fade in image");
+            cell.posterView.alpha = 0.0;
+            cell.posterView.image = image;
+            
+            //Animate UIImageView back to alpha 1 over 0.3sec
+            [UIView animateWithDuration:0.3 animations:^{
+                cell.posterView.alpha = 1.0;
+            }];
+        }
+        else {
+            NSLog(@"Image was cached so just update the image");
+            cell.posterView.image = image;
+        }
+    }
+    failure:^(NSURLRequest *request, NSHTTPURLResponse * response, NSError *error) {
+        [self presentViewController:self.alert animated:YES completion:^{}];
+    }];
+    
     
     return cell;
 }

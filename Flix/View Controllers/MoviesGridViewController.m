@@ -6,6 +6,9 @@
 //  Copyright © 2020 Angela Xu. All rights reserved.
 //
 
+//TODO: pull down reloading
+//TODO: samee connection error messages as moviesViewController
+
 #import "MoviesGridViewController.h"
 #import "DetailsViewController.h"
 #import "MovieCollectionCell.h"
@@ -38,9 +41,6 @@
     CGFloat itemWidth = (self.collectionView.frame.size.width - layout.minimumInteritemSpacing * (postersPerLine - 1)) / postersPerLine;
     CGFloat itemHeight = itemWidth * 1.5;
     layout.itemSize = CGSizeMake(itemWidth, itemHeight);
-    
-    
-
 }
 
 - (void)fetchMovies {
@@ -66,6 +66,43 @@
     [task resume];
 }
 
+- (nonnull __kindof UICollectionViewCell *)collectionView:(nonnull UICollectionView *)collectionView cellForItemAtIndexPath:(nonnull NSIndexPath *)indexPath {
+    MovieCollectionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"MovieCollectionCell" forIndexPath:indexPath];
+    
+    NSDictionary *movie = self.movies[indexPath.item];
+    
+    NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
+    NSString *posterURLString = movie[@"poster_path"];
+    NSString *fullPosterURLString = [baseURLString stringByAppendingString:posterURLString];    
+    NSURL *posterURL = [NSURL URLWithString:fullPosterURLString];
+    NSURLRequest *posterRequest = [NSURLRequest requestWithURL:posterURL];
+    [cell.posterView setImageWithURLRequest:posterRequest placeholderImage:nil
+    success:^(NSURLRequest *imageRequest, NSHTTPURLResponse *imageResponse, UIImage *image) {
+        
+        // imageResponse will be nil if the image is cached
+        if (imageResponse) {
+            NSLog(@"Image was NOT cached, fade in image");
+            cell.posterView.alpha = 0.0;
+            cell.posterView.image = image;
+            
+            //Animate UIImageView back to alpha 1 over 0.3sec
+            [UIView animateWithDuration:0.3 animations:^{
+                cell.posterView.alpha = 1.0;
+            }];
+        }
+        else {
+            NSLog(@"Image was cached so just update the image");
+            cell.posterView.image = image;
+        }
+    }
+    failure:^(NSURLRequest *request, NSHTTPURLResponse * response, NSError *error) {}];
+    
+    return cell;
+}
+
+- (NSInteger)collectionView:(nonnull UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+    return self.movies.count;
+}
 
 #pragma mark - Navigation
 
@@ -79,26 +116,5 @@
     DetailsViewController *detailViewController = [segue destinationViewController];
     detailViewController.movie = movie;
 }
-
-
-- (nonnull __kindof UICollectionViewCell *)collectionView:(nonnull UICollectionView *)collectionView cellForItemAtIndexPath:(nonnull NSIndexPath *)indexPath {
-    MovieCollectionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"MovieCollectionCell" forIndexPath:indexPath];
-    
-    NSDictionary *movie = self.movies[indexPath.item];
-    
-    NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
-    NSString *posterURLString = movie[@"poster_path"];
-    NSString *fullPosterURLString = [baseURLString stringByAppendingString:posterURLString];
-    
-    NSURL *posterURL = [NSURL URLWithString:fullPosterURLString];
-    [cell.posterView setImageWithURL:posterURL];
-    
-    return cell;
-}
-
-- (NSInteger)collectionView:(nonnull UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    return self.movies.count;
-}
-
 
 @end
