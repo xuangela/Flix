@@ -12,6 +12,9 @@
 #import "UIImageView+AFNetworking.h"
 #import "Reachability.h"
 
+//TODO: favorites
+//TODO: refresh and connection alerts for collection view as well
+
 @interface MoviesViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate>
 
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
@@ -35,6 +38,8 @@
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     self.searchBar.delegate = self;
+    
+    self.tableView.rowHeight = UITableViewAutomaticDimension;
     
     // setting up no internet error message
     self.alert = [UIAlertController alertControllerWithTitle:@"Cannot Get Movies" message:@"The internet connection appears to be offline." preferredStyle:(UIAlertControllerStyleAlert)];
