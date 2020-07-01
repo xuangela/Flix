@@ -22,19 +22,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
-    
-    NSString *movieID = self.movie[@"id"];
-    NSString *apiBaseURL = @"https://api.themoviedb.org/3/movie/";
-    NSString *urlString = [apiBaseURL stringByAppendingFormat:@"%@/videos?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed&language=en-US", movieID];
 
-    [self fetchTrailerURL:urlString];
-    NSLog(@"Hello");
-    NSLog(@"11111%@", self.trailerURL);
-    
-    
-
-
+    [self fetchTrailerURL:self.movie.trailerURLString];
 }
 
 - (void)fetchTrailerURL: (NSString *) movieURLString {
@@ -52,7 +41,6 @@
                NSString *trailerURLString = [defaultString stringByAppendingString:dataDictionary[@"results"][0][@"key"]];
                
                self.trailerURL = [NSURL URLWithString:trailerURLString];
-               NSLog(@"%@", self.trailerURL);
                
                // Place the URL in a URL Request.
                NSURLRequest *request = [NSURLRequest requestWithURL:self.trailerURL

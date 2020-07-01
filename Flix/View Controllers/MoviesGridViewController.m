@@ -13,6 +13,7 @@
 #import "DetailsViewController.h"
 #import "MovieCollectionCell.h"
 #import "UIImageView+AFNetworking.h"
+#import "Movie.h"
 
 @interface MoviesGridViewController () <UICollectionViewDataSource, UICollectionViewDelegate>
 
@@ -49,19 +50,13 @@
     NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:10.0];
     NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:nil delegateQueue:[NSOperationQueue mainQueue]];
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-            if (error != nil) {
-           }
-           else {
-               NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
-               
-               self.movies = dataDictionary[@"results"];
-               [self.collectionView reloadData];
-        
-           }
-        
+        if (error == nil) {
+            NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+            
+            self.movies = [Movie moviesWithDictionaries:dataDictionary[@"results"]];
+            [self.collectionView reloadData];
+        }
     }];
-    
-    
     
     [task resume];
 }
@@ -69,13 +64,9 @@
 - (nonnull __kindof UICollectionViewCell *)collectionView:(nonnull UICollectionView *)collectionView cellForItemAtIndexPath:(nonnull NSIndexPath *)indexPath {
     MovieCollectionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"MovieCollectionCell" forIndexPath:indexPath];
     
-    NSDictionary *movie = self.movies[indexPath.item];
-    
-    NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
-    NSString *posterURLString = movie[@"poster_path"];
-    NSString *fullPosterURLString = [baseURLString stringByAppendingString:posterURLString];    
-    NSURL *posterURL = [NSURL URLWithString:fullPosterURLString];
-    NSURLRequest *posterRequest = [NSURLRequest requestWithURL:posterURL];
+    Movie *movie = self.movies[indexPath.item];
+
+    NSURLRequest *posterRequest = [NSURLRequest requestWithURL:movie.posterURL];
     [cell.posterView setImageWithURLRequest:posterRequest placeholderImage:nil
     success:^(NSURLRequest *imageRequest, NSHTTPURLResponse *imageResponse, UIImage *image) {
         
@@ -110,7 +101,7 @@
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     UICollectionViewCell *tappedCell = sender;
     NSIndexPath *indexPath = [self.collectionView indexPathForCell:tappedCell];
-    NSDictionary *movie = self.movies[indexPath.item];
+    Movie *movie = self.movies[indexPath.item];
     
     //getting the new view controller
     DetailsViewController *detailViewController = [segue destinationViewController];

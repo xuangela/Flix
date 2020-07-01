@@ -8,12 +8,15 @@
 
 #import "MoviesViewController.h"
 #import "DetailsViewController.h"
+#import "MovieApiManager.h"
 #import "MovieCell.h"
 #import "UIImageView+AFNetworking.h"
 #import "Reachability.h"
+#import "Movie.h"
 
 //TODO: favorites
 //TODO: refresh and connection alerts for collection view as well
+//TODO: move fetch movies outside of check for wifi
 
 @interface MoviesViewController () <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate>
 
@@ -24,7 +27,6 @@
 @property (nonatomic, strong) NSArray *movies;
 @property (nonatomic, strong) NSArray *filteredMovies;
 @property (nonatomic, strong) UIRefreshControl *refreshControl;
-@property (nonatomic, strong) UIAlertController *alert;
 @property (nonatomic, strong) UIAlertController *alertResolution;
 @property BOOL alertTriggered;
 
@@ -60,59 +62,42 @@
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(checkForWIFIConnection) forControlEvents:UIControlEventValueChanged];
     [self.tableView insertSubview:self.refreshControl atIndex:0];
-}
-
-- (void)viewWillAppear:(BOOL)animated {
-    [self.activityIndicator startAnimating];
+    
     [self checkForWIFIConnection];
-}
-
-- (void)fetchMovies {
-    
-    NSURL *url = [NSURL URLWithString:@"https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed"];
-    NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:10.0];
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:nil delegateQueue:[NSOperationQueue mainQueue]];
-    
-    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-            if (error != nil) {
-                if ([[error domain] isEqualToString:@"NSURLErrorDomain"]) {
-                    [self presentViewController:self.alert animated:YES completion:^{}];
-                } else {
-                    NSLog(@"%@", error);
-                }
-           } else {
-               NSDictionary *dataDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
-               
-               self.movies = dataDictionary[@"results"];
-               self.filteredMovies = self.movies;
-               
-               [self.tableView reloadData];
-               
-               
-           }
-        [self.refreshControl endRefreshing];
-        [self.activityIndicator stopAnimating];
-        
-    }];
-    [task resume];
 }
 
 // is there an internet connection?
 - (void)checkForWIFIConnection {
     Reachability *wifiReach = [Reachability reachabilityForInternetConnection];
-
     NetworkStatus netStatus = [wifiReach currentReachabilityStatus];
 
     // ReachableViaWWAN == 3G, ReachableViaWiFi == WIFI
     if (netStatus != ReachableViaWiFi) {
         self.alertTriggered = YES;
-    } else if (self.alertTriggered){
-        [self presentViewController:self.alertResolution animated:YES completion:^{}];
-        [self.activityIndicator startAnimating];
-        self.alertTriggered = NO;
+        [self presentViewController:self.alert animated:YES completion:^{}];
+    } else {
+        if (self.alertTriggered){
+            [self presentViewController:self.alertResolution animated:YES completion:^{}];
+            self.alertTriggered = NO;
+        }
+        [self fetchMovies];
     }
-    [self fetchMovies];
 }
+
+- (void)fetchMovies {
+    [self.activityIndicator startAnimating];
+    
+    MovieApiManager *manager = [MovieApiManager new];
+    [manager fetchNowPlaying:^(NSArray *movies, NSError *error) {
+        self.movies = movies;
+        self.filteredMovies = self.movies;
+        [self.refreshControl endRefreshing];
+        [self.activityIndicator stopAnimating];
+        [self.tableView reloadData];
+    }];
+}
+
+
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     return self.filteredMovies.count;
@@ -121,41 +106,8 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     MovieCell *cell = [tableView dequeueReusableCellWithIdentifier:@"MovieCell"];
     
-    NSDictionary *movie = self.filteredMovies[indexPath.row];
-    cell.titleLabel.text = movie[@"title"];
-    cell.synopsisLabel.text = movie[@"overview"];
-    
-    NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
-    NSString *posterURLString = movie[@"poster_path"];
-    NSString *fullPosterURLString = [baseURLString stringByAppendingString:posterURLString];
-    
-    NSURL *posterURL = [NSURL URLWithString:fullPosterURLString];
-    NSURLRequest *posterRequest = [NSURLRequest requestWithURL:posterURL];
-    
-    [cell.posterView setImageWithURLRequest:posterRequest placeholderImage:nil
-    success:^(NSURLRequest *imageRequest, NSHTTPURLResponse *imageResponse, UIImage *image) {
-        
-        // imageResponse will be nil if the image is cached
-        if (imageResponse) {
-            NSLog(@"Image was NOT cached, fade in image");
-            cell.posterView.alpha = 0.0;
-            cell.posterView.image = image;
-            
-            //Animate UIImageView back to alpha 1 over 0.3sec
-            [UIView animateWithDuration:0.3 animations:^{
-                cell.posterView.alpha = 1.0;
-            }];
-        }
-        else {
-            NSLog(@"Image was cached so just update the image");
-            cell.posterView.image = image;
-        }
-    }
-    failure:^(NSURLRequest *request, NSHTTPURLResponse * response, NSError *error) {
-        [self presentViewController:self.alert animated:YES completion:^{}];
-    }];
-    
-    
+    cell.movie = self.filteredMovies[indexPath.row];
+
     return cell;
 }
 
@@ -183,9 +135,8 @@
 
     // Pass the selected object to the new view controller.
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    UITableViewCell *tappedCell = sender;
-    NSIndexPath *indexPath = [self.tableView indexPathForCell:tappedCell];
-    NSDictionary *movie = self.movies[indexPath.row];
+    MovieCell *tappedCell = sender;
+    Movie *movie = tappedCell.movie;
     
     //getting the new view controller
     DetailsViewController *detailViewController = [segue destinationViewController];

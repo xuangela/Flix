@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MoviesViewController : UIViewController
 
+@property (nonatomic, strong) UIAlertController *alert;
+
 @end
 
 NS_ASSUME_NONNULL_END

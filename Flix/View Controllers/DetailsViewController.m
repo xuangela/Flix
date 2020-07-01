@@ -10,6 +10,7 @@
 #import "TrailerViewController.h"
 #import "UIImageView+AFNetworking.h"
 
+
 @interface DetailsViewController ()
 @property (weak, nonatomic) IBOutlet UIImageView *backDropView;
 @property (weak, nonatomic) IBOutlet UIImageView *posterView;
@@ -23,14 +24,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
     
-    NSString *baseURLString = @"https://image.tmdb.org/t/p/w500";
-    
-    NSString *posterURLString = self.movie[@"poster_path"];
-    NSString *fullPosterURLString = [baseURLString stringByAppendingString:posterURLString];
-    NSURL *posterURL = [NSURL URLWithString:fullPosterURLString];
-    NSURLRequest *posterRequest = [NSURLRequest requestWithURL:posterURL];
+    // setting poster
+    NSURLRequest *posterRequest = [NSURLRequest requestWithURL:self.movie.posterURL];
     
     [self.posterView setImageWithURLRequest:posterRequest placeholderImage:nil
     success:^(NSURLRequest *imageRequest, NSHTTPURLResponse *imageResponse, UIImage *image) {
@@ -53,11 +49,9 @@
     }
     failure:^(NSURLRequest *request, NSHTTPURLResponse * response, NSError *error) {}];
     
-    NSString *backdropURLString = self.movie[@"backdrop_path"];
-    NSString *fullBackdropURLString = [baseURLString stringByAppendingString:backdropURLString];
+    // setting backdrop
+    NSURLRequest *backdropRequest = [NSURLRequest requestWithURL:self.movie.backdropURL];
     
-    NSURL *backdropURL = [NSURL URLWithString:fullBackdropURLString];
-    NSURLRequest *backdropRequest = [NSURLRequest requestWithURL:backdropURL];
     [self.backDropView setImageWithURLRequest:backdropRequest placeholderImage:nil
     success:^(NSURLRequest *imageRequest, NSHTTPURLResponse *imageResponse, UIImage *image) {
         
@@ -80,8 +74,8 @@
     failure:^(NSURLRequest *request, NSHTTPURLResponse * response, NSError *error) {}];
     
     
-    self.titleLabel.text = self.movie[@"title"];
-    self.synopsisLabel.text = self.movie[@"overview"];
+    self.titleLabel.text = self.movie.title;
+    self.synopsisLabel.text = self.movie.synopsis;
     
     [self.titleLabel sizeToFit];
     [self.synopsisLabel sizeToFit];
